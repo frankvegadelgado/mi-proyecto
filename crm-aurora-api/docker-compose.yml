@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: odoo_crm
+      POSTGRES_USER: crm_user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_user -d odoo_crm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      AURORA_HOST: db
+      AURORA_PORT: 5432
+      AURORA_DB: odoo_crm
+      AURORA_USER: crm_user
+      AURORA_PASSWORD: password
+      SECRET_KEY: dev-secret-change-me
+      APP_ENV: development
+      LOG_LEVEL: info
+      ODOO_URL: ""
+      ODOO_DB: ""
+      ODOO_USER: ""
+      ODOO_PASSWORD: ""
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+volumes:
+  pgdata:
